@@ -1,0 +1,97 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    volumes:
+      - ${SITE_PATH}:/var/www/bitrix
+      - ./storage/docker/logs/nginx/:/var/log/nginx/
+    ports:
+      - "80:80"
+    depends_on:
+      - php-fpm
+      - php-fpm-cli
+    networks:
+      bitrix:
+        ipv4_address: ${NGINX_INTERFACE}
+
+  memcached:
+    build:
+      context: ./docker/memcached
+      dockerfile: Dockerfile
+    volumes:
+      - ./storage/docker/memcached:/var/lib/memcached
+    ports:
+      - "11211"
+    depends_on:
+      - php-fpm
+    networks:
+      - bitrix
+
+  redis:
+    build:
+      context: ./docker/redis
+      dockerfile: Dockerfile
+    volumes:
+      - ./storage/docker/redis:/data
+    ports:
+      - "6379"
+    networks:
+      - bitrix
+
+  php-fpm-cli:
+    build:
+      context: ./docker/php/php-fpm-cli
+      dockerfile: Dockerfile
+    volumes:
+      - ${SITE_PATH}:/var/www/bitrix
+    depends_on:
+      - mysql
+    tty: true
+    networks:
+      - bitrix
+
+  php-fpm:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    volumes:
+      - ${SITE_PATH}:/var/www/bitrix
+      - ./storage/docker/logs/php/:/var/log/php/
+    depends_on:
+      - mysql
+    networks:
+      - bitrix
+
+  mysql:
+    build:
+      context: ./docker/mysql
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      - bitrix
+
+  mailhog:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - bitrix
+
+networks:
+  bitrix:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.100.0.0/24
