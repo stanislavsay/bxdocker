@@ -43,8 +43,8 @@ services:
 
   php-fpm-cli:
     build:
-      context: ./docker/php/php-fpm-cli
-      dockerfile: Dockerfile
+      context: ./docker/php
+      dockerfile: php-fpm-cli.Dockerfile
     volumes:
       - ${SITE_PATH}:/var/www/bitrix
     depends_on:
