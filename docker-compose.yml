@@ -9,13 +9,12 @@ services:
       - ${SITE_PATH}:/var/www/bitrix
       - ./storage/docker/logs/nginx/:/var/log/nginx/
     ports:
-      - "80:80"
+      - "${NGINX_INTERFACE}:80:80"
     depends_on:
       - php-fpm
       - php-fpm-cli
     networks:
-      bitrix:
-        ipv4_address: ${NGINX_INTERFACE}
+      - bitrix
 
   memcached:
     build:
